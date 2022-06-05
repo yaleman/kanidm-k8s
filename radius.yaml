@@ -1,0 +1,85 @@
+
+---
+apiVersion: v1
+namespace: kanidmd
+kind: ConfigMap
+metadata:
+  name: radius-config
+data:
+  config: |-
+    hello world
+---
+apiVersion: apps/v1
+namespace: kanidmd
+kind: Deployment
+metadata:
+  name: radius
+  labels:
+    app: radius
+spec:
+  selector:
+    matchLabels:
+      app: radius
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: radius
+    spec:
+      securityContext:
+        runAsGroup: 5000
+        runAsUser: 5000
+        privileged: false
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities:
+          drop: ["ALL"]
+      volumes:
+      - name: radius-config
+        configMap:
+          name: radius-config
+          items:
+            - key: config
+              path: config
+      containers:
+      - name: kanidmd
+        image: ghcr.io/kanidm/radius:devel
+        ports:
+        - name: radius
+          containerPort: 1812
+        - name: radius_tls # is this what it is?
+          containerPort: 1813
+        volumeMounts:
+        - name: radius-config-file
+          mountPath: /data/config # This should be your final destination
+          subPath: config
+          readOnly: true
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: "300m"
+          requests:
+            memory: 128Mi
+            cpu: "80m"
+---
+apiVersion: v1
+namespace: kanidmd
+kind: Service
+metadata:
+  name: radius
+spec:
+  selector:
+    app: radius
+  ports:
+    - name: radius
+      protocol: TCP
+      port: 1812
+      targetPort: 1812
+      nodePort: 1812
+    - name: radius_tls #TODO: check naming
+      protocol: TCP
+      port: 1813
+      targetPort: 1813
+      nodePort: 1813
+  type: NodePort
+---
