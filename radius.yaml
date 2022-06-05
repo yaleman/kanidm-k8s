@@ -36,7 +36,7 @@ spec:
       volumes:
       - name: radius-config
         configMap:
-          name: radius-config
+          name: kanidm-radius-config
           items:
             - key: config
               path: config
