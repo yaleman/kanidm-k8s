@@ -98,8 +98,8 @@ kind: PersistentVolume
 metadata:
   name: nfs-kanidmd
 spec:
-  #capacity:
-  #  storage: 1Gi
+  capacity:
+   storage: 1Gi
   accessModes:
     - ReadWriteMany
   nfs:
