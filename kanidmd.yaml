@@ -159,10 +159,10 @@ spec:
         runAsGroup: 5000
         runAsUser: 5000
         privileged: false
-        allowPrivilegeEscalation: false
+        # allowPrivilegeEscalation: false
         runAsNonRoot: true
-        capabilities:
-          drop: ["ALL"]
+        # capabilities:
+          # drop: ["ALL"]
       volumes:
       - name: nfs-kanidmd-db
         persistentVolumeClaim:
