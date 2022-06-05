@@ -147,7 +147,8 @@ metadata:
     app: kanidmd
 spec:
   selector:
-    app: kanidmd
+    matchLabels:
+      app: kanidmd
   replicas: 1
   template:
     metadata:
