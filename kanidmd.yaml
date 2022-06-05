@@ -9,6 +9,7 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  namespace: kanidmd
   name: kanidmd-server-toml
 data:
   server.toml: |-
@@ -103,10 +104,10 @@ data:
     versions = 48
     #
 ---
-apiVersion: v1
-namespace: kanidmd
+apiVersion: apps/v1
 kind: PersistentVolume
 metadata:
+  namespace: kanidmd
   name: nfs-kanidmd-db
 spec:
   capacity:
@@ -121,11 +122,17 @@ spec:
     - nfsvers=4.2
 ---
 apiVersion: v1
-namespace: kanidmd
 kind: PersistentVolumeClaim
 metadata:
+  namespace: kanidmd
   name: nfs-kanidmd-db
 spec:
+  selector:
+    app: kanidmd
+  template:
+    metadata:
+      labels:
+        app: kanidmd
   accessModes:
     - ReadWriteMany
   storageClassName: ""
@@ -142,9 +149,6 @@ metadata:
   labels:
     app: kanidmd
 spec:
-  selector:
-    matchLabels:
-      app: kanidmd
   replicas: 1
   template:
     metadata:
@@ -193,9 +197,9 @@ spec:
             # cpu: "80m"
 ---
 apiVersion: v1
-namespace: kanidmd
 kind: Service
 metadata:
+  namespace: kanidmd
   name: kanidmd
 spec:
   selector:

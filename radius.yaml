@@ -3,6 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  namespace: kanidmd
   name: kanidm-radius-config
 data:
   config: |-
@@ -12,6 +13,7 @@ apiVersion: apps/v1
 namespace: kanidmd
 kind: Deployment
 metadata:
+  namespace: kanidmd
   name: radius
   labels:
     app: radius
@@ -41,7 +43,7 @@ spec:
             - key: config
               path: config
       containers:
-      - name: kanidmd
+      - name: radius
         image: ghcr.io/kanidm/radius:devel
         ports:
         - name: radius
@@ -65,6 +67,7 @@ apiVersion: v1
 namespace: kanidmd
 kind: Service
 metadata:
+  namespace: kanidmd
   name: radius
 spec:
   selector:
