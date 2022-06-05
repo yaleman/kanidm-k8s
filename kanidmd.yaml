@@ -104,7 +104,7 @@ data:
     versions = 48
     #
 ---
-apiVersion: apps/v1
+apiVersion: v1
 kind: PersistentVolume
 metadata:
   namespace: kanidmd
@@ -127,8 +127,7 @@ metadata:
   namespace: kanidmd
   name: nfs-kanidmd-db
 spec:
-  selector:
-    app: kanidmd
+  selector: kanidmd
   template:
     metadata:
       labels:
@@ -149,6 +148,8 @@ metadata:
   labels:
     app: kanidmd
 spec:
+  selector:
+    app: kanidmd
   replicas: 1
   template:
     metadata:
