@@ -165,6 +165,7 @@ spec:
         - name: kanidmd-server-toml
           mountPath: /data/server.toml # This should be your final destination
           subPath: server.toml
+          read-only: true
         resources:
           limits:
             memory: 1024Mi
