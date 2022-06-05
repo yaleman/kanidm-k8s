@@ -128,11 +128,8 @@ metadata:
   name: nfs-kanidmd-db
 spec:
   selector:
-    app: kanidmd
-  template:
-    metadata:
-      labels:
-        app: kanidmd
+    matchLabels:
+      pv: nfs-kanidmd-db
   accessModes:
     - ReadWriteMany
   storageClassName: ""
