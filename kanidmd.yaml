@@ -7,7 +7,6 @@ metadata:
     pod-security.kubernetes.io/enforce: restricted
 ---
 apiVersion: v1
-namespace: kanidmd
 kind: ConfigMap
 metadata:
   name: kanidmd-server-toml
