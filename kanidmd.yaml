@@ -100,6 +100,7 @@ metadata:
 spec:
   capacity:
    storage: 20Gi
+  storageClassName: standard
   accessModes:
     - ReadWriteMany
   nfs:
@@ -114,10 +115,11 @@ metadata:
   name: nfs-kanidmd-db
   #annotations:
   #  volume.beta.kubernetes.io/storage-class: managed-premium
-  # labels:
-    # demo: nfs-pv-provisioning
+  labels:
+    app: kanidmd
 spec:
-  accessModes: [ "ReadWriteOnce" ]
+  accessModes:
+    - "ReadWriteMany"
   resources:
     requests:
       storage: 10Gi
@@ -142,13 +144,9 @@ spec:
         runAsGroup: 5000
         runAsUser: 5000
       volumes:
-      #- name: nfs-kanidmd-db
-      #  persistentVolumeClaim:
-      #    claimName:  nfs-kanidmd-db
       - name: nfs-kanidmd-db
-        nfs:
-          server: "${NFS_SERVER}"
-          path: "${NFS_PATH}"
+        persistentVolumeClaim:
+          claimName:  nfs-kanidmd-db
       - name: kanidmd-server-toml
         # To access this volume, this name must be used inside volumeMounts of the container
         configMap:
@@ -156,6 +154,7 @@ spec:
           items:
             - key: server.toml  # Name of the item we had used inside our ConfigMap (under data:)
               path: server.toml # Name of the file to be placed inside /data
+      storageClassName: standard
       containers:
       - name: kanidmd
         image: ghcr.io/kanidm/kanidmd:devel
