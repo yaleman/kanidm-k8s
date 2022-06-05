@@ -116,7 +116,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: ""
+  storageClassName: standard
   resources:
     requests:
       storage: 10Gi
