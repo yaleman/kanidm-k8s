@@ -45,7 +45,7 @@ spec:
       nodePort: 30443
     - name: ldaps
       protocol: TCP
-      port: 443
-      targetPort: 443
+      port: 636
+      targetPort: 636
       nodePort: 30636
   type: NodePort
