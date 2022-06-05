@@ -99,7 +99,7 @@ metadata:
   name: nfs-kanidmd
 spec:
   capacity:
-   storage: 200Gi
+   storage: 20Gi
   accessModes:
     - ReadWriteMany
   nfs:
@@ -112,15 +112,15 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: nfs-kanidmd-db
-  annotations:
-    volume.beta.kubernetes.io/storage-class: managed-premium
+  #annotations:
+  #  volume.beta.kubernetes.io/storage-class: managed-premium
   # labels:
     # demo: nfs-pv-provisioning
 spec:
   accessModes: [ "ReadWriteOnce" ]
   resources:
     requests:
-      storage: 200Gi
+      storage: 10Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
