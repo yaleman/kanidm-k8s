@@ -110,9 +110,9 @@ spec:
         app: kanidmd
     spec:
       volumes:
-      - name: kanidmd
+      - name: kanidmd-db
         secret:
-          secretName: kanidmd
+          secretName: kanidmd-db
       - name: kanidmd-server-toml
         # To access this volume, this name must be used inside volumeMounts of the container
         configMap:
@@ -130,8 +130,8 @@ spec:
         - name: ldaps
           containerPort: 3636
         volumeMounts:
-        - mountPath: /db
-          name:
+        - name: kanidmd-db
+          mountPath: /db
         - name: kanidmd-server-toml
           mountPath: /data/server.toml # This should be your final destination
           subPath: server.toml
