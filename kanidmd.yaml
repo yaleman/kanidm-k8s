@@ -79,7 +79,7 @@ data:
     #     and must have a replication agreement as a source of
     #     its data.
     #   Defaults to "WriteReplica".
-    role = "WriteReplica"
+    role = "WriteReplicaNoUI"
     #
     # [online_backup]
     #   The path to the output folder for online backups
