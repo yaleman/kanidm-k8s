@@ -158,7 +158,7 @@ spec:
       securityContext:
         runAsGroup: 5000
         runAsUser: 5000
-        privileged: false
+        # privileged: false
         # allowPrivilegeEscalation: false
         runAsNonRoot: true
         # capabilities:
