@@ -96,7 +96,7 @@ data:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nfs-kanidmd
+  name: nfs-kanidmd-db
 spec:
   capacity:
    storage: 20Gi
