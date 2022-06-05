@@ -139,8 +139,8 @@ spec:
         app: kanidmd
     spec:
       securityContext:
-        runAsGroup: 3000
-        runAsUser: 3000
+        runAsGroup: 5000
+        runAsUser: 5000
       volumes:
       - name: nfs-kanidmd-db
         persistentVolumeClaim:
@@ -171,7 +171,7 @@ spec:
           readOnly: true
         resources:
           limits:
-            memory: 1024Mi
+            memory: 10d f-h24Mi
             cpu: "500m"
           # requests:
             # memory: 128Mi
