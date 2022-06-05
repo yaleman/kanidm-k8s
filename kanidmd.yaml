@@ -18,8 +18,10 @@ spec:
       - name: kanidmd
         image: ghcr.io/kanidm/kanidmd:devel
         ports:
-        - containerPort: 443
-        - containerPort: 636
+        - name: https
+          containerPort: 443
+        - name: ldaps
+          containerPort: 636
         # resources:
           # limits:
             # memory: 256Mi
