@@ -142,9 +142,13 @@ spec:
         runAsGroup: 5000
         runAsUser: 5000
       volumes:
+      #- name: nfs-kanidmd-db
+      #  persistentVolumeClaim:
+      #    claimName:  nfs-kanidmd-db
       - name: nfs-kanidmd-db
-        persistentVolumeClaim:
-          claimName:  nfs-kanidmd-db
+        nfs:
+          server: "${NFS_SERVER}"
+          path: "${NFS_PATH}"
       - name: kanidmd-server-toml
         # To access this volume, this name must be used inside volumeMounts of the container
         configMap:
