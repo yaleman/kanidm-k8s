@@ -1,16 +1,14 @@
 # kanidm-k8s
 
-Example deployment of the kanidm server in k8s.
+Example deployment of the kanidm server in k8s. I'm testing this on k3s, using the "devel" image auto-built from github.
 
 ## Deployment
 
 1. Clone the repository
 2. Check the configuration file (`server.toml`). It's a configuration map which we'll load into k8s.
 3. Create a `.env` file to set environment variables for deployment
-3. Deploy the configuration by running `deploy.sh`
-
-
-Setting the admin password:
+4. Deploy the configuration by running `deploy.sh`
+5. Set the admin password:
 
 ```
 sudo kubectl exec -it \
@@ -18,11 +16,8 @@ sudo kubectl exec -it \
     /sbin/kanidmd  recover_account -c /data/server.toml -n admin
 ```
 
-Restarting the service afterwards:
+6. Restart the service afterwards to make the admin password update stick:
 
 ```
 sudo kubectl rollout restart deployments.apps/kanidmd
 ```
-
-
- v8Tusy2QQPwP0JaWwKcNeVAzW1ZD9zc77HfKy3yMCU5uFGjD
