@@ -103,8 +103,8 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: ${NFS_SERVER}
-    path: ${NFS_PATH}
+    server: "${NFS_SERVER}"
+    path: "${NFS_PATH}"
   mountOptions:
     - nfsvers=4.2
 ---
@@ -138,6 +138,9 @@ spec:
       labels:
         app: kanidmd
     spec:
+      securityContext:
+        runAsGroup: 5000
+        runAsUser: 5000
       volumes:
       - name: nfs-kanidmd-db
         persistentVolumeClaim:
