@@ -139,9 +139,9 @@ spec:
   volumeName: nfs-kanidmd-db
 ---
 apiVersion: apps/v1
-namespace: kanidmd
 kind: Deployment
 metadata:
+  namespace: kanidmd
   name: kanidmd
   labels:
     app: kanidmd
