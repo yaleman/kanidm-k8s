@@ -154,7 +154,6 @@ spec:
           items:
             - key: server.toml  # Name of the item we had used inside our ConfigMap (under data:)
               path: server.toml # Name of the file to be placed inside /data
-      storageClassName: standard
       containers:
       - name: kanidmd
         image: ghcr.io/kanidm/kanidmd:devel
