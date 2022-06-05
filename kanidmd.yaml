@@ -127,7 +127,8 @@ metadata:
   namespace: kanidmd
   name: nfs-kanidmd-db
 spec:
-  selector: kanidmd
+  selector:
+    app: kanidmd
   template:
     metadata:
       labels:
