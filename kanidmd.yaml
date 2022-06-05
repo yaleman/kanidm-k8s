@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kanidmd
+  labels:
+    app: kanidmd
+spec:
+  selector:
+    matchLabels:
+      app: kanidmd
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kanidmd
+    spec:
+      containers:
+      - name: kanidmd
+        image: ghcr.io/kanidm/kanidmd:devel
+        ports:
+        - containerPort: 443
+        - containerPort: 636
+        # resources:
+          # limits:
+            # memory: 256Mi
+            # cpu: "250m"
+          # requests:
+            # memory: 128Mi
+            # cpu: "80m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kanidmd
+spec:
+  selector:
+    app: kanidmd
+  ports:
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+      nodePort: 30443
+    - name: ldaps
+      protocol: TCP
+      port: 443
+      targetPort: 443
+      nodePort: 30636
+  type: NodePort
