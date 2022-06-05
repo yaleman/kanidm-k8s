@@ -103,7 +103,7 @@ spec:
   selector:
     matchLabels:
       app: kanidmd
-  replicas: 1
+  # replicas: 1
   template:
     metadata:
       labels:
@@ -124,6 +124,8 @@ spec:
       containers:
       - name: kanidmd
         image: ghcr.io/kanidm/kanidmd:devel
+        command: ["ls"]
+        args: ["/data"]
         ports:
         - name: https
           containerPort: 8443
