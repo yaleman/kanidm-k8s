@@ -21,3 +21,12 @@ sudo kubectl exec -it \
 ```
 sudo kubectl rollout restart deployments.apps/kanidmd
 ```
+
+# Resources Definitions
+
+## Services
+
+```toml
+spec:
+  ipFamilyPolicy = "RequireDualStack"
+```
