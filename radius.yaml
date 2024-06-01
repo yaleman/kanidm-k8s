@@ -1,19 +1,19 @@
-
 ---
+### THIS IS UNTESTED
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: kanidmd
+  namespace: ${NAMESPACE}
   name: kanidm-radius-config
 data:
   config: |-
     hello world
 ---
 apiVersion: apps/v1
-namespace: kanidmd
+namespace: ${NAMESPACE}
 kind: Deployment
 metadata:
-  namespace: kanidmd
+  namespace: ${NAMESPACE}
   name: radius
   labels:
     app: radius
@@ -64,10 +64,10 @@ spec:
             cpu: "80m"
 ---
 apiVersion: v1
-namespace: kanidmd
+namespace: ${NAMESPACE}
 kind: Service
 metadata:
-  namespace: kanidmd
+  namespace: ${NAMESPACE}
   name: radius
 spec:
   selector:
@@ -78,7 +78,7 @@ spec:
       port: 1812
       targetPort: 1812
       nodePort: 1812
-    - name: radius_tls #TODO: check naming
+    - name: radius_tls
       protocol: TCP
       port: 1813
       targetPort: 1813

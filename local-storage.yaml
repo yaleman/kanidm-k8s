@@ -1,0 +1,49 @@
+# use this if you're testing with local storage
+---
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "${STORAGECLASS}"
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  namespace: ${NAMESPACE}
+  name: kanidmd-db
+spec:
+  capacity:
+   storage: 2Gi
+  storageClassName: "${STORAGECLASS}"
+  accessModes:
+    - ReadWriteMany
+  local:
+    path: /tmp/kanidm-k8s
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ${NODE_NAME}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace: ${NAMESPACE}
+  name: kanidmd-db
+spec:
+  selector:
+    matchLabels:
+      pv: kanidmd-db
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "${STORAGECLASS}"
+  resources:
+    requests:
+      storage: 2Gi
+  volumeName: kanidmd-db

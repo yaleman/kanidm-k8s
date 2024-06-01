@@ -2,21 +2,25 @@
 kind: Namespace
 apiVersion: v1
 metadata:
-  name: kanidmd
+  name: ${NAMESPACE}
   labels:
     pod-security.kubernetes.io/enforce: restricted
 ---
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+apiVersion: v1
+kind: Secret
 metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
+  namespace: ${NAMESPACE}
+  name: kanidm-certs
+# type: kubernetes.io/tls
+data:
+  tls.key: ${TLS_KEY}
+  tls.crt: ${TLS_CHAIN}
+
 ---
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  namespace: kanidmd
+  namespace: ${NAMESPACE}
   name: kanidmd-server-toml
 data:
   server.toml: |-
@@ -24,19 +28,21 @@ data:
     #   Defaults to "127.0.0.1:8443"
     bindaddress = "[::]:8443"
     #
-    #   The read-only ldap server bind address. The server will use LDAPS if tls_* is provided.
+    #   The read-only ldap server bind address.
+    # The server will use LDAPS if tls_* is provided.
     #   Defaults to "" (disabled)
     ldapbindaddress = "[::]:3636"
     #
     #   The path to the kanidm database.
     db_path = "/db/kanidm.db"
     #
-    #   If you have a known filesystem, kanidm can tune sqlite to match. Valid choices are:
-    #   [zfs, other]
-    #   If you are unsure about this leave it as the default (other). After changing this
-    #   value you must run a vacuum task.
+    #   If you have a known filesystem, kanidm can tune sqlite to match.
+    #   Valid choices are: [zfs, other]
+    #   If you are unsure about this leave it as the default (other).
+    #   After changing this value you must run a vacuum task.
     #   - zfs:
-    #     * sets sqlite pagesize to 64k. You must set recordsize=64k on the zfs filesystem.
+    #     * sets sqlite pagesize to 64k. You must set
+    #       recordsize=64k on the zfs filesystem.
     #   - other:
     #     * sets sqlite pagesize to 4k, matching most filesystems block sizes.
     # db_fs_type = "zfs"
@@ -46,8 +52,8 @@ data:
     # db_arc_size = 2048
     #
     #   TLS chain and key in pem format. Both must be commented, or both must be present
-    # tls_chain = "/data/chain.pem"
-    # tls_key = "/data/key.pem"
+    tls_chain = "/certs/tls.crt"
+    tls_key = "/certs/tls.key"
     #
     #   The log level of the server. May be default, verbose,
     #   perfbasic, perffull
@@ -110,50 +116,12 @@ data:
     #   Number of backups to keep (default 7)
     versions = 48
     #
----
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  namespace: kanidmd
-  name: kanidmd-db
-spec:
-  capacity:
-   storage: 2Gi
-  storageClassName: "local-storage"
-  accessModes:
-    - ReadWriteMany
-  local:
-    path: /tmp/kanidm-k8s
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - orbstack
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  namespace: kanidmd
-  name: kanidmd-db
-spec:
-  selector:
-    matchLabels:
-      pv: kanidmd-db
-  accessModes:
-    - ReadWriteMany
-  storageClassName: "local-storage"
-  resources:
-    requests:
-      storage: 2Gi
-  volumeName: kanidmd-db
+
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  namespace: kanidmd
+  namespace: ${NAMESPACE}
   name: kanidmd
   labels:
     app: kanidmd
@@ -174,6 +142,9 @@ spec:
           type: RuntimeDefault
         runAsNonRoot: true
       volumes:
+      - name: kanidmd-certs
+        secret:
+          secretName: kanidm-certs
       - name: kanidmd-db
         persistentVolumeClaim:
           claimName:  kanidmd-db
@@ -183,9 +154,14 @@ spec:
           items:
             - key: server.toml
               path: server.toml
+      - name: socket-volume
+        emptyDir: {}
       containers:
       - name: kanidmd
         image: kanidm/server:latest
+        env:
+        - name: KANIDM_ADMIN_BIND_PATH
+          value: "/var/run/kanidmd.sock"
         ports:
         - name: https
           containerPort: 8443
@@ -199,9 +175,14 @@ spec:
         - name: kanidmd-db
           mountPath: /db
         - name: kanidmd-server-toml
-          mountPath: /data/server.toml # This should be your final destination
+          mountPath: /data/server.toml
           subPath: server.toml
           readOnly: true
+        - name: kanidmd-certs
+          readOnly: true
+          mountPath: "/certs"
+        - name: socket-volume
+          mountPath: /var/run
         resources:
           limits:
             memory: 1024Mi
@@ -217,7 +198,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  namespace: kanidmd
+  namespace: ${NAMESPACE}
   name: kanidmd
 spec:
   selector:

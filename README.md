@@ -1,6 +1,6 @@
 # kanidm-k8s
 
-Example deployment of the kanidm server in k8s. I'm testing this on k3s, using the "devel" image auto-built from github.
+Example deployment of the kanidm server in k8s. I'm testing this on orbstack, using release builds.
 
 ## Deployment
 
@@ -10,23 +10,8 @@ Example deployment of the kanidm server in k8s. I'm testing this on k3s, using t
 4. Deploy the configuration by running `deploy.sh`
 5. Set the admin password:
 
-```
-sudo kubectl exec -it \
-    pods/$(sudo kubectl get pods -n default -o json | jq -r '.items[0].metadata.name') -- \
-    /sbin/kanidmd  recover_account -c /data/server.toml -n admin
-```
-
-6. Restart the service afterwards to make the admin password update stick:
-
-```
-sudo kubectl rollout restart deployments.apps/kanidmd
-```
-
-# Resources Definitions
-
-## Services
-
-```toml
-spec:
-  ipFamilyPolicy = "RequireDualStack"
+```shell
+kubectl exec -it \
+    pods/$(kubectl get pods -n kanidmd -o json | jq -r '.items[0].metadata.name') -- \
+    /sbin/kanidmd recover_account -c /data/server.toml -n admin
 ```
