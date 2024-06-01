@@ -1,4 +1,4 @@
 #!/bin/bash
 
-sudo kubectl logs \
-    pods/$(sudo kubectl get pods -n default -o json | jq -r '.items[0].metadata.name')
+kubectl logs \
+    "pods/$(kubectl get pods -n kanidmd -o json | jq -r '.items[0].metadata.name')"

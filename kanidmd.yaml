@@ -6,6 +6,13 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: restricted
 ---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -108,35 +115,40 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   namespace: kanidmd
-  name: nfs-kanidmd-db
+  name: kanidmd-db
 spec:
   capacity:
-   storage: 20Gi
-  storageClassName: ""
+   storage: 2Gi
+  storageClassName: "local-storage"
   accessModes:
     - ReadWriteMany
-  nfs:
-    server: "${NFS_SERVER}"
-    path: "${NFS_PATH}"
-  mountOptions:
-    - nfsvers=4.2
+  local:
+    path: /tmp/kanidm-k8s
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - orbstack
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   namespace: kanidmd
-  name: nfs-kanidmd-db
+  name: kanidmd-db
 spec:
   selector:
     matchLabels:
-      pv: nfs-kanidmd-db
+      pv: kanidmd-db
   accessModes:
     - ReadWriteMany
-  storageClassName: ""
+  storageClassName: "local-storage"
   resources:
     requests:
-      storage: 10Gi
-  volumeName: nfs-kanidmd-db
+      storage: 2Gi
+  volumeName: kanidmd-db
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -155,28 +167,16 @@ spec:
       labels:
         app: kanidmd
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - amd64
       securityContext:
         runAsGroup: 5000
         runAsUser: 5000
-        # readOnlyRootFilesystem: true
-        # privileged: false
-        # allowPrivilegeEscalation: false
+        seccompProfile:
+          type: RuntimeDefault
         runAsNonRoot: true
-        # capabilities:
-          # drop: ["ALL"]
       volumes:
-      - name: nfs-kanidmd-db
+      - name: kanidmd-db
         persistentVolumeClaim:
-          claimName:  nfs-kanidmd-db
+          claimName:  kanidmd-db
       - name: kanidmd-server-toml
         configMap:
           name: kanidmd-server-toml
@@ -185,14 +185,18 @@ spec:
               path: server.toml
       containers:
       - name: kanidmd
-        image: ghcr.io/kanidm/kanidmd:devel
+        image: kanidm/server:latest
         ports:
         - name: https
           containerPort: 8443
         - name: ldaps
           containerPort: 3636
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
         volumeMounts:
-        - name: nfs-kanidmd-db
+        - name: kanidmd-db
           mountPath: /db
         - name: kanidmd-server-toml
           mountPath: /data/server.toml # This should be your final destination
@@ -202,9 +206,6 @@ spec:
           limits:
             memory: 1024Mi
             cpu: "500m"
-          # requests:
-            # memory: 128Mi
-            # cpu: "80m"
         livenessProbe:
           httpGet:
             path: /status
