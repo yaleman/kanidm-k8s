@@ -6,6 +6,53 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: restricted
 ---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "${STORAGECLASS}"
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  namespace: ${NAMESPACE}
+  name: kanidmd-db
+spec:
+  capacity:
+    storage: 2Gi
+  storageClassName: "${STORAGECLASS}"
+  accessModes:
+    - ReadWriteOnce
+  local:
+    path: /tmp/kanidm-k8s
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - ${NODE_NAME}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace: ${NAMESPACE}
+  name: kanidmd-db
+spec:
+  selector:
+    matchLabels:
+      pv: kanidmd-db
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "${STORAGECLASS}"
+  resources:
+    requests:
+      storage: 2Gi
+  volumeName: kanidmd-db
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -64,73 +111,73 @@ spec:
           type: RuntimeDefault
         runAsNonRoot: true
       volumes:
-      - name: kanidmd-certs
-        secret:
-          secretName: kanidm-certs
-      - name: kanidmd-db
-        persistentVolumeClaim:
-          claimName:  kanidmd-db
-      - name: kanidmd-server-toml
-        configMap:
-          name: kanidmd-server-toml
-          items:
-            - key: server.toml
-              path: server.toml
-      - name: socket-volume
-        emptyDir: {}
-      containers:
-      - name: kanidmd
-        image: kanidm/server:latest
-        env:
-        - name: KANIDM_BINDADDRESS
-          value: "[::]:8443"
-        # - name: KANIDM_DB_PATH # can't set with env var until kanidm/kanidm#2809 is closed
-        #   value: "/db/kanidm.db"
-        - name: KANIDM_DOMAIN
-          value: ${KANIDM_DOMAIN}
-        - name: KANIDM_ORIGIN
-          value: https://${KANIDM_DOMAIN}
-        - name: KANIDM_LOG_LEVEL
-          value: DEBUG
-        - name: KANIDM_ADMIN_BIND_PATH
-          value: "/var/run/kanidmd.sock"
-        - name: KANIDM_TLS_CHAIN
-          value: /certs/tls.crt
-        - name: KANIDM_TLS_KEY
-          value: /certs/tls.key
-        - name: RUST_LOG
-          value: DEBUG
-        ports:
-        - name: https
-          containerPort: 8443
-        - name: ldaps
-          containerPort: 3636
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        volumeMounts:
-        - name: kanidmd-db
-          mountPath: /db
-        - name: kanidmd-server-toml
-          mountPath: /data/server.toml
-          subPath: server.toml
-          readOnly: true
         - name: kanidmd-certs
-          readOnly: true
-          mountPath: "/certs"
+          secret:
+            secretName: kanidm-certs
+        - name: kanidmd-db
+          persistentVolumeClaim:
+            claimName: kanidmd-db
+        - name: kanidmd-server-toml
+          configMap:
+            name: kanidmd-server-toml
+            items:
+              - key: server.toml
+                path: server.toml
         - name: socket-volume
-          mountPath: /var/run
-        resources:
-          limits:
-            memory: 1024Mi
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /status
-            port: https
-          initialDelaySeconds: 30
-          periodSeconds: 5
+          emptyDir: {}
+      containers:
+        - name: kanidmd
+          image: kanidm/server:latest
+          env:
+            - name: KANIDM_BINDADDRESS
+              value: "[::]:8443"
+            # - name: KANIDM_DB_PATH # can't set with env var until kanidm/kanidm#2809 is closed
+            #   value: "/db/kanidm.db"
+            - name: KANIDM_DOMAIN
+              value: ${KANIDM_DOMAIN}
+            - name: KANIDM_ORIGIN
+              value: https://${KANIDM_DOMAIN}
+            - name: KANIDM_LOG_LEVEL
+              value: DEBUG
+            - name: KANIDM_ADMIN_BIND_PATH
+              value: "/var/run/kanidmd.sock"
+            - name: KANIDM_TLS_CHAIN
+              value: /certs/tls.crt
+            - name: KANIDM_TLS_KEY
+              value: /certs/tls.key
+            - name: RUST_LOG
+              value: DEBUG
+          ports:
+            - name: https
+              containerPort: 8443
+            - name: ldaps
+              containerPort: 3636
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: kanidmd-db
+              mountPath: /db
+            - name: kanidmd-server-toml
+              mountPath: /data/server.toml
+              subPath: server.toml
+              readOnly: true
+            - name: kanidmd-certs
+              readOnly: true
+              mountPath: "/certs"
+            - name: socket-volume
+              mountPath: /var/run
+          resources:
+            limits:
+              memory: 1024Mi
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: https
+            initialDelaySeconds: 30
+            periodSeconds: 5
 
 ---
 kind: Service
@@ -155,3 +202,4 @@ spec:
       nodePort: 30636
   type: NodePort
 ---
+
