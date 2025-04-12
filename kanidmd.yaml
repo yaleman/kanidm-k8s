@@ -62,6 +62,7 @@ metadata:
 data:
   tls.key: ${TLS_KEY}
   tls.crt: ${TLS_CHAIN}
+  tls.ca: ${TLS_CA}
 
 ---
 kind: ConfigMap
@@ -175,7 +176,8 @@ spec:
           livenessProbe:
             httpGet:
               path: /status
-              port: https
+              port: 8443
+              scheme: HTTPS
             initialDelaySeconds: 30
             periodSeconds: 5
 
@@ -189,17 +191,87 @@ spec:
   selector:
     app: kanidmd
   ports:
-    # TODO: work out how to use ingress controllers :D
     - name: https
       protocol: TCP
       port: 8443
       targetPort: 8443
-      nodePort: 30443
+      # nodePort: 30443
     - name: ldaps
       protocol: TCP
       port: 3636
       targetPort: 3636
-      nodePort: 30636
-  type: NodePort
 ---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: kanidm-host-header
+  namespace: ${NAMESPACE}
+spec:
+  headers:
+    customRequestHeaders:
+      Host: "${KANIDM_DOMAIN}"
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: kanidmd
+  namespace: ${NAMESPACE}
 
+spec:
+  serverName: ${KANIDM_DOMAIN}
+  rootCAsSecrets:
+    - kanidm-certs
+  certificatesSecrets:
+    - kanidm-certs
+  insecureSkipVerify: true
+  maxIdleConnsPerHost: 1
+  peerCertURI: ${KANIDM_DOMAIN}
+  disableHTTP2: true
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kanidmd
+  namespace: ${NAMESPACE}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`${KANIDM_DOMAIN}`)
+      kind: Rule
+      middlewares:
+        - name: kanidm-host-header
+      services:
+        - name: kanidmd
+          port: 8443
+          serversTransport: kanidmd
+  tls:
+    secretName: kanidm-certs
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kanidmd
+  namespace: ${NAMESPACE}
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: kanidmd
+    traefik.ingress.kubernetes.io/preserve-host: "true"
+    traefik.ingress.kubernetes.io/debug: "true"
+spec:
+  rules:
+    - host: ${KANIDM_DOMAIN}
+      http:
+        paths:
+          - backend:
+              service:
+                name: kanidmd
+                port:
+                  number: 8443
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - ${KANIDM_DOMAIN}
+      secretName: kanidm-certs
